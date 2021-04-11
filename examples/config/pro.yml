@@ -1,0 +1,11 @@
+database:
+  adapter: postgresql
+  encoding: unicode
+  username: ting
+  password: ting
+  port: '3306'
+  host: localhost
+  database: template
+app:
+  mode: release
+  port: 8080

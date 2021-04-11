@@ -1,0 +1,4 @@
+/.idea
+/log/*
+/tmp/*
+/examples/config/template.yml
