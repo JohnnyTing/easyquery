@@ -1,14 +1,10 @@
 #### easyquery 拥有通用的CRUD接口；特别是强大的查询功能，前端只要遵守查询约定，就能解放后端双手（基于GORM和GIN） 。
 
-
-
 #### 安装:
 
 ```textile
 go get github.com/JohnnyTing/easyquery
 ```
-
-
 
 #### 前后端查询约定:
 
@@ -156,8 +152,8 @@ go get github.com/JohnnyTing/easyquery
     url: /users/group?userName[group]=true
     
     sql: SELECT user_name as label, count(1) as value FROM "users" WHERE "users"."deleted_at" IS NULL GROUP BY "user_name" ORDER BY value desc
-    
-    
+    ```
+
     # join字段分组
     
     url: /users/group?company_j_name[group]=true
@@ -171,8 +167,8 @@ go get github.com/JohnnyTing/easyquery
     url: /users/?company_j_name[eq]=qylz
     
     sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "Company"."name" = 'qylz' AND "users"."deleted_at" IS NULL
-    
-    
+    ```
+
     url: /users?company_j_id[in]=2&company_j_id[in]=1
     
     sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "Company"."id" IN ('2','1') AND "users"."deleted_at" IS NULL
@@ -210,10 +206,10 @@ go get github.com/JohnnyTing/easyquery
 18. 自定义查询操作符，仅支持单值，不支持数组(in)、无值(is_null, not_null，order等)
     
     ```go
-    # 定义的操作符为lowerCamel
+    # 操作符，Clause的key为Camel，url[]里面的值会自动转换为Camel形式
     
     easyquery.Clause["Dayu"] = func(field string) string {
-    	return fmt.Sprintf("%s > ?", field)
+        return fmt.Sprintf("%s > ?", field)
     }
     
     url: id[dayu]=1
@@ -225,13 +221,11 @@ go get github.com/JohnnyTing/easyquery
     
     ```textile
     url: /users/?id[gteq]=1&loginName[eq]=dingxu&company_j_name[like]=qy
-    
-    
+    ```
+
     sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "users"."id" >= '1' AND "users"."login_name" = 'dingxu' AND "Company"."name" like '%qy%' AND "users"."deleted_at" IS NULL ORDER BY "users"."id" desc LIMIT 10
     
     ```
-
-
 
 #### 用法 [完整例子](https://github.com/JohnnyTing/easyquery/tree/master/examples)
 
@@ -241,39 +235,38 @@ go get github.com/JohnnyTing/easyquery
    package user
    
    import (
-   	"gorm.io/gorm/clause"
+       "gorm.io/gorm/clause"
    
-   	"gorm.io/gorm"
+       "gorm.io/gorm"
    )
    
    // 模型
    var (
-   	Model  = &User{}
-   	Models = &[]User{}
+       Model  = &User{}
+       Models = &[]User{}
    )
    
    type User struct {
-   	gorm.Model
-   	LoginName *string
-   	UserName  *string
-   	Mobile    *int32
-   	Password  *string
-   	Gender    *string
-   	CompanyID uint
-   	Company   Company `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-   	Roles     []Role  `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+       gorm.Model
+       LoginName *string
+       UserName  *string
+       Mobile    *int32
+       Password  *string
+       Gender    *string
+       CompanyID uint
+       Company   Company `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+       Roles     []Role  `gorm:"many2many:user_roles;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
    }
    
    // 设置预加载对象
    func (user *User) Preload() []string {
-   	return []string{clause.Associations}
+       return []string{clause.Associations}
    }
    
    // 设置join查询对象，join查询时需要
    func (user *User) Joins() []interface{} {
-   	return []interface{}{Company{}}
+       return []interface{}{Company{}}
    }
-   
    ```
 
 2. 定义service
@@ -282,40 +275,39 @@ go get github.com/JohnnyTing/easyquery
    package user
    
    import (
-   	"easyquery"
-   	"easyquery/examples/pkg/db"
+       "easyquery"
+       "easyquery/examples/pkg/db"
    
-   	"github.com/gin-gonic/gin"
-   	"gorm.io/gorm"
+       "github.com/gin-gonic/gin"
+       "gorm.io/gorm"
    
-   	"golang.org/x/crypto/bcrypt"
+       "golang.org/x/crypto/bcrypt"
    )
    
    var UserCrudService *UserService
    
    // 继承easyquery Crud接口
    type UserService struct {
-   	easyquery.Crud
+       easyquery.Crud
    }
    
    func init() {
-   	UserCrudService = NewDefaultUserService()
+       UserCrudService = NewDefaultUserService()
    }
    
    func NewUserService(crud easyquery.Crud) *UserService {
-   	return &UserService{crud}
+       return &UserService{crud}
    }
    
    // 需要传crud模型与数据库连接gorm.DB
    func NewDefaultUserService() *UserService {
-   	return NewUserService(easyquery.NewCrudService(Model, Models, retreiveGormDB))
+       return NewUserService(easyquery.NewCrudService(Model, Models, retreiveGormDB))
    }
    
    // 数据库连接，用户自定义postgresql、mysql等
    func retreiveGormDB() *gorm.DB {
-   	return db.Postgres
+       return db.Postgres
    }
-   
    ```
 
 3. 定义handler
@@ -324,59 +316,57 @@ go get github.com/JohnnyTing/easyquery
    package user
    
    import (
-   	"easyquery"
-   	"easyquery/tools/stringutil"
+       "easyquery"
+       "easyquery/tools/stringutil"
    
-   	"github.com/gin-gonic/gin"
+       "github.com/gin-gonic/gin"
    )
    
    // 继承easyquery handler
    type UserHandler struct {
-   	easyquery.BaseHandler
+       easyquery.BaseHandler
    }
    
    func (handler *UserHandler) List(c *gin.Context) {
-   	var models []User
-   	err := UserCrudService.List(&models, handler.Transform(c, Model))
-   	handler.HandleList(c, &models, err)
+       var models []User
+       err := UserCrudService.List(&models, handler.Transform(c, Model))
+       handler.HandleList(c, &models, err)
    }
    
    func (handler *UserHandler) Group(c *gin.Context) {
-   	var models []easyquery.GroupVO
-   	err := UserCrudService.Group(&models, handler.Transform(c, Model))
-   	handler.Handle(c, &models, err)
+       var models []easyquery.GroupVO
+       err := UserCrudService.Group(&models, handler.Transform(c, Model))
+       handler.Handle(c, &models, err)
    }
    
    func (handler *UserHandler) Create(c *gin.Context) {
-   	var model User
-   	c.ShouldBind(&model)
-   	err := UserCrudService.Create(&model)
-   	handler.Handle(c, &model, err)
+       var model User
+       c.ShouldBind(&model)
+       err := UserCrudService.Create(&model)
+       handler.Handle(c, &model, err)
    }
    
    func (handler *UserHandler) Update(c *gin.Context) {
-   	var model User
-   	c.ShouldBind(&model)
-   	model.ID = stringutil.Str2Uint(c.Param("id"))
-   	err := UserCrudService.Update(&model)
-   	handler.Handle(c, &model, err)
+       var model User
+       c.ShouldBind(&model)
+       model.ID = stringutil.Str2Uint(c.Param("id"))
+       err := UserCrudService.Update(&model)
+       handler.Handle(c, &model, err)
    }
    
    func (handler *UserHandler) Find(c *gin.Context) {
-   	model := User{}
-   	err := UserCrudService.Find(&model, handler.Transform(c, Model))
-   	handler.Handle(c, &model, err)
+       model := User{}
+       err := UserCrudService.Find(&model, handler.Transform(c, Model))
+       handler.Handle(c, &model, err)
    }
    
    func (handler *UserHandler) Delete(c *gin.Context) {
-   	model := User{}
-   	model.ID = stringutil.Str2Uint(c.Param("id"))
-   	err := UserCrudService.Delete(&model)
-   	handler.Handle(c, &model, err)
+       model := User{}
+       model.ID = stringutil.Str2Uint(c.Param("id"))
+       err := UserCrudService.Delete(&model)
+       handler.Handle(c, &model, err)
    }
    ```
-
-
 
 注意：如果实际项目没有用gin，自己实现QueryParamer 接口即可，具体数据格式参考handler.go、queries.go、pagination.go
 
