@@ -153,12 +153,13 @@ go get github.com/JohnnyTing/easyquery
     
     sql: SELECT user_name as label, count(1) as value FROM "users" WHERE "users"."deleted_at" IS NULL GROUP BY "user_name" ORDER BY value desc
     ```
-
-    # join字段分组
     
+    join字段分组:
+    
+    ```textile
     url: /users/group?company_j_name[group]=true
     
-    sql:  SELECT "Company"."name" as label, count(1) as value FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "users"."deleted_at" IS NULL GROUP BY "Company"."name" ORDER BY value desc
+    sql: SELECT "Company"."name" as label, count(1) as value FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "users"."deleted_at" IS NULL GROUP BY "Company"."name" ORDER BY value desc
     ```
 
 19. Join连接查询(join)，仅适用于一对一的关系(has one, belongs to)
@@ -167,8 +168,8 @@ go get github.com/JohnnyTing/easyquery
     url: /users/?company_j_name[eq]=qylz
     
     sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "Company"."name" = 'qylz' AND "users"."deleted_at" IS NULL
-    ```
-
+    
+    
     url: /users?company_j_id[in]=2&company_j_id[in]=1
     
     sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "Company"."id" IN ('2','1') AND "users"."deleted_at" IS NULL
@@ -184,10 +185,9 @@ go get github.com/JohnnyTing/easyquery
     func (user *User) Joins() []interface{} {
      return []interface{}{Company{}}
     }
-    
     ```
 
-17. 支持预加载(Preload)
+20. 支持预加载(Preload)
     
     ```textile
     在User结构体添加Preload方法：
@@ -203,7 +203,7 @@ go get github.com/JohnnyTing/easyquery
     }
     ```
 
-18. 自定义查询操作符，仅支持单值，不支持数组(in)、无值(is_null, not_null，order等)
+21. 自定义查询操作符，仅支持单值，不支持数组(in)、无值(is_null, not_null，order等)
     
     ```go
     # 操作符，Clause的key为Camel，url[]里面的值会自动转换为Camel形式
@@ -217,15 +217,16 @@ go get github.com/JohnnyTing/easyquery
     sql: WHERE id > '1' 
     ```
 
-19. 组合查询
+22. 组合查询
     
     ```textile
     url: /users/?id[gteq]=1&loginName[eq]=dingxu&company_j_name[like]=qy
-    ```
-
-    sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "users"."id" >= '1' AND "users"."login_name" = 'dingxu' AND "Company"."name" like '%qy%' AND "users"."deleted_at" IS NULL ORDER BY "users"."id" desc LIMIT 10
     
+    
+    sql: SELECT * FROM "users" LEFT JOIN "companies" "Company" ON "users"."company_id" = "Company"."id" WHERE "users"."id" >= '1' AND "users"."login_name" = 'dingxu' AND "Company"."name" like '%qy%' AND "users"."deleted_at" IS NULL ORDER BY "users"."id" desc LIMIT 10
     ```
+    
+    
 
 #### 用法 [完整例子](https://github.com/JohnnyTing/easyquery/tree/master/examples)
 
